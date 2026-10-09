@@ -41,12 +41,13 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (!user) return
+    const currentUser = user
 
     let cancelled = false
 
     async function load() {
       try {
-        const page = await api.listWorkspaces(user.userId)
+        const page = await api.listWorkspaces(currentUser.userId)
         if (cancelled) return
         setWorkspaces(page.items)
       } catch {

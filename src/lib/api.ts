@@ -1,8 +1,15 @@
 import keycloak, { updateToken } from './keycloak'
 import type {
+  AssigneeDashboardResponse,
   CursorPageProjectResponse,
+  CursorPageUserResponse,
   CursorPageWorkspaceResponse,
+  ProjectAttentionResponse,
+  ProjectDashboardResponse,
   ProjectResponse,
+  ProjectStatisticsResponse,
+  TaskPriority,
+  TaskStatus,
   UserProfileResponse,
   WorkspaceResponse,
 } from './types'
@@ -91,4 +98,61 @@ export const api = {
     request<ProjectResponse>(
       `/workspaces/${encodeURIComponent(workspaceId)}/projects/${encodeURIComponent(projectId)}`,
     ),
+
+  listUsers: () => request<CursorPageUserResponse>('/users?limit=100'),
+
+  dashboard: (
+    projectId: string,
+    params: {
+      from?: string
+      to?: string
+      taskLimit?: number
+      taskCursor?: string
+      status?: TaskStatus[]
+      priority?: TaskPriority[]
+    } = {},
+  ) => {
+    const query = new URLSearchParams()
+    if (params.from) query.set('from', params.from)
+    if (params.to) query.set('to', params.to)
+    if (params.taskLimit) query.set('taskLimit', String(params.taskLimit))
+    if (params.taskCursor) query.set('taskCursor', params.taskCursor)
+    params.status?.forEach((s) => query.append('status', s))
+    params.priority?.forEach((p) => query.append('priority', p))
+    const qs = query.toString()
+    return request<ProjectDashboardResponse>(
+      `/projects/${encodeURIComponent(projectId)}/dashboard${qs ? `?${qs}` : ''}`,
+    )
+  },
+
+  dashboardStatistics: (projectId: string, from: string, to: string) =>
+    request<ProjectStatisticsResponse>(
+      `/projects/${encodeURIComponent(projectId)}/dashboard/statistics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    ),
+
+  dashboardAttention: (projectId: string, limit = 20) =>
+    request<ProjectAttentionResponse>(
+      `/projects/${encodeURIComponent(projectId)}/dashboard/attention?limit=${limit}`,
+    ),
+
+  assigneeDashboard: (
+    projectId: string,
+    assigneeId: string,
+    params: {
+      from?: string
+      to?: string
+      limit?: number
+      cursor?: string
+    } = {},
+  ) => {
+    const query = new URLSearchParams()
+    if (params.from) query.set('from', params.from)
+    if (params.to) query.set('to', params.to)
+    if (params.limit) query.set('limit', String(params.limit))
+    if (params.cursor) query.set('cursor', params.cursor)
+    const qs = query.toString()
+    return request<AssigneeDashboardResponse>(
+      `/projects/${encodeURIComponent(projectId)}/dashboard/assignee/${encodeURIComponent(assigneeId)}/task${qs ? `?${qs}` : ''}`,
+    )
+  },
 }
